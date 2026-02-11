@@ -96,11 +96,9 @@ class ReportLabRenderer:
         try:
             from PIL import Image
 
-            # Read image to get original dimensions
             with Image.open(image_path) as img:
                 orig_width, orig_height = img.size
 
-            # Calculate aspect ratio
             aspect_ratio = orig_width / orig_height
             pdf_width, pdf_height = pdf_dimensions
 
@@ -170,7 +168,6 @@ class ReportLabRenderer:
             canvas_obj.rotate(style.rotation)
 
             if watermark.type == WatermarkType.IMAGE:
-                # Calculate dimensions with scaling
                 x, y, img_width, img_height = self._calculate_image_dimensions(
                     watermark.content,
                     dimensions,

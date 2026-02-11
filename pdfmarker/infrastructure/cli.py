@@ -62,7 +62,6 @@ class CLIAdapter:
         if not pdf_path.endswith(".pdf"):
             pdf_path += ".pdf"
 
-        # Prompt for type with validation loop
         while True:
             type_input = input("Watermark type (text/image): ").strip().lower()
             if type_input in ("text", "image"):
@@ -72,7 +71,6 @@ class CLIAdapter:
                 break
             print("Invalid type. Please enter 'text' or 'image'.")
 
-        # Get content based on type
         text = None
         image_path = None
         image_scale = None

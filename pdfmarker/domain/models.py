@@ -84,7 +84,7 @@ class ImageScaleConfig:
             return 60.0
         elif self.preset == ScalePreset.ORIGINAL:
             return None  # Signal to use original dimensions
-        else:  # CUSTOM
+        else:
             return self.custom_percentage
 
 
@@ -99,7 +99,6 @@ class Watermark:
         if not self.content:
             raise InvalidWatermarkError("Watermark content cannot be empty")
 
-        # Validate image_scale only set for IMAGE type
         if self.image_scale is not None and self.type != WatermarkType.IMAGE:
             raise InvalidWatermarkError(
                 "image_scale only valid for IMAGE watermarks"
