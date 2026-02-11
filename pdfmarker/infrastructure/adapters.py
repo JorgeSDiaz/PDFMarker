@@ -6,7 +6,7 @@ import tempfile
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen.canvas import Canvas
 
-from pdfmarker.domain.models import Watermark, PDFDocument, WatermarkType
+from pdfmarker.domain.models import Watermark, PDFDocument, WatermarkType, ImageScaleConfig
 from pdfmarker.domain.exceptions import InvalidPDFError, InvalidWatermarkError
 
 
@@ -77,6 +77,69 @@ class PyPDF2Repository:
 class ReportLabRenderer:
     """Watermark rendering adapter using ReportLab."""
 
+    def _calculate_image_dimensions(
+        self,
+        image_path: str,
+        pdf_dimensions: tuple[float, float],
+        scale_config: "ImageScaleConfig | None"
+    ) -> tuple[float, float, float, float]:
+        """Calculate scaled image dimensions and position.
+
+        Args:
+            image_path: Path to the image file
+            pdf_dimensions: (width, height) of PDF page in points
+            scale_config: Scaling configuration (None = backward compatible 200x200)
+
+        Returns:
+            Tuple of (x_offset, y_offset, scaled_width, scaled_height)
+        """
+        try:
+            from PIL import Image
+
+            # Read image to get original dimensions
+            with Image.open(image_path) as img:
+                orig_width, orig_height = img.size
+
+            # Calculate aspect ratio
+            aspect_ratio = orig_width / orig_height
+            pdf_width, pdf_height = pdf_dimensions
+
+            # Backward compatibility: use 200x200 if no scale_config
+            if scale_config is None:
+                return (-100, -100, 200, 200)
+
+            # Get target percentage (None for ORIGINAL preset)
+            target_percentage = scale_config.get_percentage()
+
+            if target_percentage is None:
+                # ORIGINAL: Use image dimensions in points (1px=1pt)
+                target_width = float(orig_width)
+                target_height = float(orig_height)
+            else:
+                # PERCENTAGE: Scale relative to PDF width
+                target_width = pdf_width * (target_percentage / 100.0)
+                target_height = target_width / aspect_ratio
+
+            # Limit watermark to 95% of PDF dimensions (prevent overflow)
+            if target_width > pdf_width * 0.95:
+                target_width = pdf_width * 0.95
+                target_height = target_width / aspect_ratio
+
+            if target_height > pdf_height * 0.95:
+                target_height = pdf_height * 0.95
+                target_width = target_height * aspect_ratio
+
+            # Center the watermark (offset from center point)
+            x_offset = -target_width / 2
+            y_offset = -target_height / 2
+
+            return (x_offset, y_offset, target_width, target_height)
+
+        except FileNotFoundError:
+            raise InvalidWatermarkError(f"Image file not found: {image_path}")
+        except Exception as e:
+            raise InvalidWatermarkError(f"Failed to read image dimensions: {e}")
+
     def render(self, watermark: Watermark, dimensions: tuple[float, float]) -> str:
         """Render watermark to PDF.
 
@@ -107,12 +170,19 @@ class ReportLabRenderer:
             canvas_obj.rotate(style.rotation)
 
             if watermark.type == WatermarkType.IMAGE:
+                # Calculate dimensions with scaling
+                x, y, img_width, img_height = self._calculate_image_dimensions(
+                    watermark.content,
+                    dimensions,
+                    watermark.image_scale
+                )
+
                 canvas_obj.drawImage(
                     watermark.content,
-                    -100,
-                    -100,
-                    width=200,
-                    height=200,
+                    x,
+                    y,
+                    width=img_width,
+                    height=img_height,
                     mask="auto",
                 )
             else:

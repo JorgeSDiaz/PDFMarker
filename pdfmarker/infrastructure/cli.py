@@ -3,7 +3,7 @@
 import os
 from dataclasses import dataclass
 
-from pdfmarker.domain.models import Watermark, WatermarkStyle, WatermarkType
+from pdfmarker.domain.models import Watermark, WatermarkStyle, WatermarkType, ImageScaleConfig, ScalePreset
 from pdfmarker.domain.exceptions import (
     InvalidWatermarkError,
     InvalidPDFError,
@@ -20,6 +20,7 @@ class UserInput:
     watermark_type: WatermarkType
     text: str | None
     image_path: str | None
+    image_scale: ImageScaleConfig | None = None
 
 
 class CLIAdapter:
@@ -41,7 +42,8 @@ class CLIAdapter:
             watermark = Watermark(
                 type=user_input.watermark_type,
                 content=content,
-                style=style
+                style=style,
+                image_scale=user_input.image_scale
             )
 
             output_path = self._service.apply_watermark_to_pdf(user_input.pdf_path, watermark)
@@ -73,6 +75,7 @@ class CLIAdapter:
         # Get content based on type
         text = None
         image_path = None
+        image_scale = None
 
         if watermark_type == WatermarkType.TEXT:
             text = input("Enter watermark text: ").strip()
@@ -81,8 +84,9 @@ class CLIAdapter:
         else:
             image_path = input("Enter image path: ").strip()
             self._validate_image_path(image_path)
+            image_scale = self._get_image_scale_config()
 
-        return UserInput(pdf_path, watermark_type, text, image_path)
+        return UserInput(pdf_path, watermark_type, text, image_path, image_scale)
 
     def _validate_image_path(self, image_path: str) -> None:
         """Validate that image path exists and is readable.
@@ -108,6 +112,56 @@ class CLIAdapter:
             raise InvalidWatermarkError(
                 f"Unsupported image format. Supported: {', '.join(valid_extensions)}"
             )
+
+    def _get_image_scale_config(self) -> ImageScaleConfig:
+        """Prompt user for image scaling preferences.
+
+        Returns:
+            ImageScaleConfig with selected preset/custom value
+        """
+        print("\nImage Scale Options:")
+        print("  1. Small    (20% of PDF width)")
+        print("  2. Medium   (40% of PDF width)")
+        print("  3. Large    (60% of PDF width)")
+        print("  4. Original (actual image size) [default]")
+        print("  5. Custom   (specify percentage)")
+
+        while True:
+            choice = input("Select scale (1-5) [4]: ").strip() or "4"
+
+            if choice == "1":
+                return ImageScaleConfig(preset=ScalePreset.SMALL)
+            elif choice == "2":
+                return ImageScaleConfig(preset=ScalePreset.MEDIUM)
+            elif choice == "3":
+                return ImageScaleConfig(preset=ScalePreset.LARGE)
+            elif choice == "4":
+                return ImageScaleConfig(preset=ScalePreset.ORIGINAL)
+            elif choice == "5":
+                return self._get_custom_scale()
+            else:
+                print("Invalid choice. Please enter 1-5.")
+
+    def _get_custom_scale(self) -> ImageScaleConfig:
+        """Prompt for custom scaling percentage.
+
+        Returns:
+            ImageScaleConfig with CUSTOM preset
+        """
+        while True:
+            try:
+                percentage = input("Enter percentage of PDF width (5-100): ").strip()
+                value = float(percentage)
+
+                # Domain validation will handle bounds checking
+                return ImageScaleConfig(
+                    preset=ScalePreset.CUSTOM,
+                    custom_percentage=value
+                )
+            except InvalidWatermarkError as e:
+                print(f"✗ {e}")
+            except ValueError:
+                print("✗ Please enter a valid number.")
 
     def _display_success(self, output_path: str) -> None:
         print(f"✓ Watermark applied: {output_path}")
