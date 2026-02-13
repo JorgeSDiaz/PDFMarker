@@ -6,6 +6,13 @@
       "description": "Analiza tareas y coordina agentes especializados por capa en el proyecto PDFMarker",
       "mode": "primary",
       "prompt": "Eres el orquestador del proyecto PDFMarker. Analiza tareas, detecta capas involucradas y coordina agentes.",
+      "subagents": {
+        "domain": true,
+        "application": true,
+        "infrastructure": true,
+        "testing": true,
+        "orchestrator": false
+      },
       "permission": {
         "task": {
           "domain": "allow",

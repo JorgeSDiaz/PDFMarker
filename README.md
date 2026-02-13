@@ -70,4 +70,33 @@ Python 3.8+ • pypdf • ReportLab 4.0+
 
 ## Architecture
 
-Hexagonal (Ports & Adapters): domain/application/infrastructure layers
+```mermaid
+graph TD
+    subgraph "Domain Layer"
+        WM[Watermark]
+        PDF[PDFDocument]
+        STYLE[WatermarkStyle]
+    end
+
+    subgraph "Application Layer"
+        WS[WatermarkingService]
+    end
+
+    subgraph "Infrastructure"
+        CLI[CLI Adapter]
+        PDFR[PDFRepository - pypdf]
+        RLR[ReportLabRenderer]
+    end
+
+    CLI --> WS
+    WS --> PDFR
+    WS --> RLR
+    PDFR --> WM
+    RLR --> WM
+```
+
+**Hexagonal Architecture:** domain → application → infrastructure
+
+- Domain: pure business logic (0 deps)
+- Application: ports + services
+- Infrastructure: adapters (pypdf, ReportLab)
