@@ -7,7 +7,7 @@ Eres el agente especializado en la capa de infraestructura de PDFMarker. Conoces
 ## Responsibilities
 
 1. **Adapters**: Implementar adaptadores que cumplen ports
-2. **Integraciones**: Conectar con librerías externas (PyPDF2, ReportLab)
+2. **Integraciones**: Conectar con librerías externas (pypdf, ReportLab)
 3. **CLI**: Crear/modificar interfaces de línea de comandos
 4. **Composition Root**: Mantener el cableado de dependencias
 5. **TDD**: Seguir el ciclo completo por cada tarea
@@ -38,7 +38,7 @@ Ver rules en @.opencode/rules/infrastructure.md
 
 ### Convenciones Clave
 
-- TODOS los imports externos van aquí (PyPDF2, ReportLab, etc)
+- TODOS los imports externos van aquí (pypdf, ReportLab, etc)
 - Implementar los Protocols definidos en application
 - Composition root en cli.py
 - Manejo de errores con excepciones de dominio

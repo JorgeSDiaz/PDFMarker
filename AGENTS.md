@@ -61,7 +61,7 @@ infrastructure → application → domain
 | `pdfmarker/domain/models.py`           | Watermark, PDFDocument, WatermarkStyle |
 | `pdfmarker/application/ports.py`       | Protocol definitions                   |
 | `pdfmarker/application/services.py`    | WatermarkingServiceImpl                |
-| `pdfmarker/infrastructure/adapters.py` | PyPDF2Repository, ReportLabRenderer    |
+| `pdfmarker/infrastructure/adapters.py` | PDFRepository, ReportLabRenderer       |
 | `pdfmarker/infrastructure/cli.py`      | CLIAdapter + composition root          |
 
 ## Testing

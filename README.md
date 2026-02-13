@@ -41,11 +41,11 @@ Select scale (1-5) [4]: 2
 
 ```python
 from pdfmarker.domain.models import Watermark, WatermarkStyle, WatermarkType
-from pdfmarker.infrastructure.adapters import PyPDF2Repository, ReportLabRenderer
+from pdfmarker.infrastructure.adapters import PDFRepository, ReportLabRenderer
 from pdfmarker.application.services import WatermarkingServiceImpl
 
 # Setup
-service = WatermarkingServiceImpl(PyPDF2Repository(), ReportLabRenderer())
+service = WatermarkingServiceImpl(PDFRepository(), ReportLabRenderer())
 
 # Text watermark
 style = WatermarkStyle(opacity=0.5, rotation=30, size=36, font="Helvetica")
@@ -66,7 +66,7 @@ Image scale presets: Small (20%), Medium (40%), Large (60%), Original, Custom (5
 
 ## Requirements
 
-Python 3.8+ • PyPDF2 3.0+ • ReportLab 4.0+
+Python 3.8+ • pypdf • ReportLab 4.0+
 
 ## Architecture
 

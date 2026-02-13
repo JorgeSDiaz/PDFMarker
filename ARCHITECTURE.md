@@ -7,18 +7,20 @@ PDFMarker has been refactored from a monolithic 73-line script into a clean **He
 ## Architecture Comparison
 
 ### Before (Monolithic)
+
 ```
 main.py (73 lines)
 ├── generate_watermark()        # ReportLab directly
-├── generate_watermarked_pdf()  # PyPDF2 directly
+├── generate_watermarked_pdf()  # pypdf directly
 └── main()                      # Mixed CLI + business logic
 ```
 
 **Problems:**
+
 - ❌ Business logic mixed with CLI (`input()` calls)
 - ❌ Hard to test (no dependency injection)
 - ❌ Hard to extend (adding REST API requires full rewrite)
-- ❌ Direct dependencies on PyPDF2/ReportLab everywhere
+- ❌ Direct dependencies on pypdf/ReportLab everywhere
 
 ### After (Hexagonal Architecture)
 
@@ -33,7 +35,7 @@ pdfmarker/
 │   └── services.py           # 100 lines - Use case orchestration
 │
 └── infrastructure/             # OUTER HEXAGON (Adapters)
-    ├── adapters.py           # 150 lines - PyPDF2 + ReportLab
+    ├── adapters.py           # 150 lines - pypdf + ReportLab
     └── cli.py                # 80 lines - CLI + composition root
 
 main.py                         # 10 lines - Entry point
@@ -41,6 +43,7 @@ tests/test_watermarking.py      # 170 lines - Comprehensive tests
 ```
 
 **Benefits:**
+
 - ✅ Pure business logic (domain has 0 external dependencies)
 - ✅ Testable with mocks (14 passing unit tests)
 - ✅ REST-ready (add new adapter, no domain changes)
@@ -63,14 +66,16 @@ Infrastructure → Application → Domain
 ### 2. Ports & Adapters
 
 **Inbound Ports** (what the app offers):
+
 - `WatermarkingService` - Use case interface
 - Implemented by: `WatermarkingServiceImpl`
 - Called by: `CLIAdapter`, future `APIAdapter`
 
 **Outbound Ports** (what the app needs):
+
 - `PDFRepository` - PDF operations interface
 - `WatermarkRenderer` - Watermark rendering interface
-- Implemented by: `PyPDF2Repository`, `ReportLabRenderer`
+- Implemented by: `PDFRepository`, `ReportLabRenderer`
 
 ### 3. Dependency Injection
 
@@ -79,7 +84,7 @@ Infrastructure → Application → Domain
 ```python
 def main():
     # Create adapters (infrastructure)
-    pdf_repo = PyPDF2Repository()
+    pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
 
     # Inject into service (application)
@@ -101,16 +106,19 @@ This is the **ONLY** place that knows about concrete implementations.
 **Purpose:** Pure business logic with zero external dependencies
 
 **Files:**
+
 - `models.py` - Entities (`Watermark`, `PDFDocument`) and Value Objects (`WatermarkStyle`)
 - `exceptions.py` - Domain-specific exceptions
 
 **Rules:**
+
 - ✅ Can use Python stdlib (dataclasses, enum, typing)
-- ❌ Cannot import PyPDF2, ReportLab, FastAPI
+- ❌ Cannot import pypdf, ReportLab, FastAPI
 - ✅ Validation in `__post_init__`
 - ✅ Frozen dataclasses for immutability (value objects)
 
 **Example:**
+
 ```python
 @dataclass(frozen=True)
 class WatermarkStyle:
@@ -127,16 +135,19 @@ class WatermarkStyle:
 **Purpose:** Use cases and hexagon boundaries (ports)
 
 **Files:**
+
 - `ports.py` - Protocol definitions (duck typing interfaces)
 - `services.py` - Use case implementations
 
 **Rules:**
+
 - ✅ Can import from domain
 - ❌ Cannot import from infrastructure
 - ✅ Depends on ports (abstractions), not implementations
 - ✅ Orchestrates domain logic
 
 **Example:**
+
 ```python
 class WatermarkingServiceImpl:
     def __init__(self, pdf_repo: PDFRepository, renderer: WatermarkRenderer):
@@ -155,22 +166,25 @@ class WatermarkingServiceImpl:
 **Purpose:** Concrete implementations (adapters to external systems)
 
 **Files:**
-- `adapters.py` - PyPDF2 and ReportLab adapters
+
+- `adapters.py` - pypdf and ReportLab adapters
 - `cli.py` - CLI adapter + composition root
 
 **Rules:**
+
 - ✅ Can import from application and domain
 - ✅ Implements ports (outbound adapters)
 - ✅ Contains all external library imports
 - ✅ Composition root wires dependencies
 
 **Example:**
+
 ```python
-class PyPDF2Repository:
+class PDFRepository:
     """Implements PDFRepository port"""
 
     def read(self, path: str) -> PDFDocument:
-        reader = PdfReader(path)  # PyPDF2 import only here
+        reader = PdfReader(path)  # pypdf import only here
         # ...
         return PDFDocument(width, height, pages)
 ```
@@ -178,6 +192,7 @@ class PyPDF2Repository:
 ## Testing Strategy
 
 ### Domain Tests
+
 ```python
 def test_watermark_style_validation():
     with pytest.raises(InvalidWatermarkError):
@@ -189,6 +204,7 @@ def test_watermark_style_validation():
 - Fast and reliable
 
 ### Application Tests
+
 ```python
 def test_apply_watermark_service():
     mock_repo = Mock(spec=PDFRepository)
@@ -202,6 +218,7 @@ def test_apply_watermark_service():
 - Verify interactions
 
 ### Infrastructure Tests
+
 - Test adapters with real libraries (optional)
 - Integration tests (end-to-end)
 
@@ -234,7 +251,7 @@ async def watermark_endpoint(file: UploadFile, text: str):
 # infrastructure/api.py
 def create_app():
     # Same DI pattern as CLI
-    pdf_repo = PyPDF2Repository()
+    pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
     service = WatermarkingServiceImpl(pdf_repo, renderer)
     return APIAdapter(service)
@@ -244,7 +261,7 @@ def create_app():
 
 ### Switching PDF Libraries
 
-To replace PyPDF2 with `pypdf` or another library:
+To replace pypdf with another library:
 
 1. Create `NewPDFRepository` implementing `PDFRepository` port
 2. Update composition root:
@@ -255,13 +272,13 @@ To replace PyPDF2 with `pypdf` or another library:
 
 ## Code Metrics
 
-| Layer | Files | Lines | Dependencies |
-|-------|-------|-------|--------------|
-| Domain | 2 | ~100 | 0 (pure Python) |
-| Application | 2 | ~160 | Domain only |
-| Infrastructure | 2 | ~230 | Application + Domain + External libs |
-| Tests | 1 | ~170 | All layers |
-| **Total** | **7** | **~660** | **Clean separation** |
+| Layer          | Files | Lines    | Dependencies                         |
+| -------------- | ----- | -------- | ------------------------------------ |
+| Domain         | 2     | ~100     | 0 (pure Python)                      |
+| Application    | 2     | ~160     | Domain only                          |
+| Infrastructure | 2     | ~230     | Application + Domain + External libs |
+| Tests          | 1     | ~170     | All layers                           |
+| **Total**      | **7** | **~660** | **Clean separation**                 |
 
 Average file size: ~70 lines (easy to navigate)
 
@@ -291,11 +308,13 @@ class PDFRepository(Protocol):
 ### Composition Root Pattern
 
 The `main()` function in `infrastructure/cli.py` is the **only place** that knows about:
+
 - Concrete adapter implementations
 - Dependency wiring
 - System configuration
 
 This enables:
+
 - Easy testing (inject mocks)
 - Easy extension (swap implementations)
 - Clear architecture (explicit dependencies)

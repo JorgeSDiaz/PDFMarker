@@ -31,7 +31,7 @@ The only place that wires dependencies is `infrastructure/cli.py:main()`:
 
 ```python
 def main() -> None:
-    pdf_repo = PyPDF2Repository()
+    pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
     service = WatermarkingServiceImpl(pdf_repo, renderer)
     cli = CLIAdapter(service)
