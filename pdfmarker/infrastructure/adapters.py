@@ -3,15 +3,20 @@
 import os
 import tempfile
 
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen.canvas import Canvas
 
-from pdfmarker.domain.models import Watermark, PDFDocument, WatermarkType, ImageScaleConfig
+from pdfmarker.domain.models import (
+    Watermark,
+    PDFDocument,
+    WatermarkType,
+    ImageScaleConfig,
+)
 from pdfmarker.domain.exceptions import InvalidPDFError, InvalidWatermarkError
 
 
-class PyPDF2Repository:
-    """PDF operations adapter using PyPDF2."""
+class PDFRepository:
+    """PDF operations adapter using pypdf."""
 
     def read(self, path: str) -> PDFDocument:
         """Read PDF metadata.
@@ -58,14 +63,13 @@ class PyPDF2Repository:
         """
         try:
             pdf_reader = PdfReader(pdf_path)
-            pdf_writer = PdfWriter()
+            pdf_writer = PdfWriter(clone_from=pdf_reader)
 
             watermark_reader = PdfReader(watermark_path)
             watermark_page = watermark_reader.pages[0]
 
-            for page in pdf_reader.pages:
-                page.merge_page(watermark_page)
-                pdf_writer.add_page(page)
+            for page in pdf_writer.pages:
+                page.merge_page(watermark_page, over=True)
 
             with open(output_path, "wb") as output_file:
                 pdf_writer.write(output_file)
@@ -81,7 +85,7 @@ class ReportLabRenderer:
         self,
         image_path: str,
         pdf_dimensions: tuple[float, float],
-        scale_config: "ImageScaleConfig | None"
+        scale_config: "ImageScaleConfig | None",
     ) -> tuple[float, float, float, float]:
         """Calculate scaled image dimensions and position.
 
@@ -169,9 +173,7 @@ class ReportLabRenderer:
 
             if watermark.type == WatermarkType.IMAGE:
                 x, y, img_width, img_height = self._calculate_image_dimensions(
-                    watermark.content,
-                    dimensions,
-                    watermark.image_scale
+                    watermark.content, dimensions, watermark.image_scale
                 )
 
                 canvas_obj.drawImage(

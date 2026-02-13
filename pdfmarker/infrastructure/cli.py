@@ -3,19 +3,26 @@
 import os
 from dataclasses import dataclass
 
-from pdfmarker.domain.models import Watermark, WatermarkStyle, WatermarkType, ImageScaleConfig, ScalePreset
+from pdfmarker.domain.models import (
+    Watermark,
+    WatermarkStyle,
+    WatermarkType,
+    ImageScaleConfig,
+    ScalePreset,
+)
 from pdfmarker.domain.exceptions import (
     InvalidWatermarkError,
     InvalidPDFError,
     WatermarkApplicationError,
 )
 from pdfmarker.application.services import WatermarkingServiceImpl
-from pdfmarker.infrastructure.adapters import PyPDF2Repository, ReportLabRenderer
+from pdfmarker.infrastructure.adapters import PDFRepository, ReportLabRenderer
 
 
 @dataclass
 class UserInput:
     """User input captured from CLI prompts."""
+
     pdf_path: str
     watermark_type: WatermarkType
     text: str | None
@@ -43,10 +50,12 @@ class CLIAdapter:
                 type=user_input.watermark_type,
                 content=content,
                 style=style,
-                image_scale=user_input.image_scale
+                image_scale=user_input.image_scale,
             )
 
-            output_path = self._service.apply_watermark_to_pdf(user_input.pdf_path, watermark)
+            output_path = self._service.apply_watermark_to_pdf(
+                user_input.pdf_path, watermark
+            )
             self._display_success(output_path)
 
         except (InvalidWatermarkError, InvalidPDFError, WatermarkApplicationError) as e:
@@ -105,7 +114,7 @@ class CLIAdapter:
             raise InvalidWatermarkError(f"Path is not a file: {image_path}")
 
         # Validate file extension for early feedback
-        valid_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp')
+        valid_extensions = (".png", ".jpg", ".jpeg", ".gif", ".bmp")
         if not image_path.lower().endswith(valid_extensions):
             raise InvalidWatermarkError(
                 f"Unsupported image format. Supported: {', '.join(valid_extensions)}"
@@ -153,8 +162,7 @@ class CLIAdapter:
 
                 # Domain validation will handle bounds checking
                 return ImageScaleConfig(
-                    preset=ScalePreset.CUSTOM,
-                    custom_percentage=value
+                    preset=ScalePreset.CUSTOM, custom_percentage=value
                 )
             except InvalidWatermarkError as e:
                 print(f"✗ {e}")
@@ -170,7 +178,7 @@ class CLIAdapter:
 
 def main() -> None:
     """Composition root - wires all dependencies."""
-    pdf_repository = PyPDF2Repository()
+    pdf_repository = PDFRepository()
     watermark_renderer = ReportLabRenderer()
     service = WatermarkingServiceImpl(pdf_repository, watermark_renderer)
     cli = CLIAdapter(service)

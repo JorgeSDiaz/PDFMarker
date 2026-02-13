@@ -11,7 +11,7 @@ The infrastructure layer contains concrete implementations (adapters to external
 
 ### External Dependencies
 
-- ALL external library imports go here (PyPDF2, ReportLab, PIL)
+- ALL external library imports go here (pypdf, ReportLab, PIL)
 - Domain and application layers must remain dependency-free
 
 ### Adapters
@@ -19,9 +19,9 @@ The infrastructure layer contains concrete implementations (adapters to external
 Implement ports defined in application layer:
 
 ```python
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 
-class PyPDF2Repository:
+class PDFRepository:
     """Implements PDFRepository port"""
 
     def read(self, path: str) -> PDFDocument:
@@ -32,7 +32,7 @@ class PyPDF2Repository:
         return PDFDocument(width=width, height=height, page_count=len(reader.pages))
 
     def merge_watermark(self, pdf_path: str, watermark_path: str, output_path: str) -> None:
-        # PyPDF2 implementation
+        # pypdf implementation
         pass
 ```
 
@@ -46,7 +46,7 @@ The `main()` function in `infrastructure/cli.py` is the ONLY place that knows ab
 
 ```python
 def main() -> None:
-    pdf_repo = PyPDF2Repository()
+    pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
     service = WatermarkingServiceImpl(pdf_repo, renderer)
     cli = CLIAdapter(service)

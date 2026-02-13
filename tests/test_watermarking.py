@@ -48,17 +48,23 @@ class TestWatermarkStyle:
 
     def test_opacity_validation_too_high(self):
         """Test opacity validation rejects values > 1."""
-        with pytest.raises(InvalidWatermarkError, match="Opacity must be between 0 and 1"):
+        with pytest.raises(
+            InvalidWatermarkError, match="Opacity must be between 0 and 1"
+        ):
             WatermarkStyle(opacity=1.5)
 
     def test_opacity_validation_negative(self):
         """Test opacity validation rejects negative values."""
-        with pytest.raises(InvalidWatermarkError, match="Opacity must be between 0 and 1"):
+        with pytest.raises(
+            InvalidWatermarkError, match="Opacity must be between 0 and 1"
+        ):
             WatermarkStyle(opacity=-0.1)
 
     def test_rotation_validation_too_high(self):
         """Test rotation validation rejects values > 360."""
-        with pytest.raises(InvalidWatermarkError, match="Rotation must be between 0 and 360"):
+        with pytest.raises(
+            InvalidWatermarkError, match="Rotation must be between 0 and 360"
+        ):
             WatermarkStyle(rotation=400)
 
     def test_size_validation_negative(self):
@@ -79,7 +85,9 @@ class TestWatermark:
     def test_text_watermark_creation(self):
         """Test creating a text watermark."""
         style = WatermarkStyle()
-        watermark = Watermark(type=WatermarkType.TEXT, content="CONFIDENTIAL", style=style)
+        watermark = Watermark(
+            type=WatermarkType.TEXT, content="CONFIDENTIAL", style=style
+        )
 
         assert watermark.type == WatermarkType.TEXT
         assert watermark.content == "CONFIDENTIAL"
@@ -133,17 +141,23 @@ class TestImageScaleConfig:
 
     def test_custom_percentage_below_minimum_raises_error(self):
         """Test custom percentage < 5 raises error."""
-        with pytest.raises(InvalidWatermarkError, match="custom_percentage must be 5-100"):
+        with pytest.raises(
+            InvalidWatermarkError, match="custom_percentage must be 5-100"
+        ):
             ImageScaleConfig(preset=ScalePreset.CUSTOM, custom_percentage=3.0)
 
     def test_custom_percentage_above_maximum_raises_error(self):
         """Test custom percentage > 100 raises error."""
-        with pytest.raises(InvalidWatermarkError, match="custom_percentage must be 5-100"):
+        with pytest.raises(
+            InvalidWatermarkError, match="custom_percentage must be 5-100"
+        ):
             ImageScaleConfig(preset=ScalePreset.CUSTOM, custom_percentage=150.0)
 
     def test_custom_percentage_with_non_custom_preset_raises_error(self):
         """Test custom percentage with non-CUSTOM preset raises error."""
-        with pytest.raises(InvalidWatermarkError, match="only valid with CUSTOM preset"):
+        with pytest.raises(
+            InvalidWatermarkError, match="only valid with CUSTOM preset"
+        ):
             ImageScaleConfig(preset=ScalePreset.SMALL, custom_percentage=50.0)
 
     def test_immutability(self):
@@ -161,10 +175,7 @@ class TestWatermarkWithImageScale:
         style = WatermarkStyle()
         scale = ImageScaleConfig(preset=ScalePreset.LARGE)
         watermark = Watermark(
-            type=WatermarkType.IMAGE,
-            content="logo.png",
-            style=style,
-            image_scale=scale
+            type=WatermarkType.IMAGE, content="logo.png", style=style, image_scale=scale
         )
 
         assert watermark.image_scale.preset == ScalePreset.LARGE
@@ -174,22 +185,21 @@ class TestWatermarkWithImageScale:
         style = WatermarkStyle()
         scale = ImageScaleConfig(preset=ScalePreset.LARGE)
 
-        with pytest.raises(InvalidWatermarkError, match="only valid for IMAGE watermarks"):
+        with pytest.raises(
+            InvalidWatermarkError, match="only valid for IMAGE watermarks"
+        ):
             Watermark(
                 type=WatermarkType.TEXT,
                 content="CONFIDENTIAL",
                 style=style,
-                image_scale=scale
+                image_scale=scale,
             )
 
     def test_image_watermark_without_image_scale_is_valid(self):
         """Test IMAGE watermark works without image_scale (backward compatible)."""
         style = WatermarkStyle()
         watermark = Watermark(
-            type=WatermarkType.IMAGE,
-            content="logo.png",
-            style=style,
-            image_scale=None
+            type=WatermarkType.IMAGE, content="logo.png", style=style, image_scale=None
         )
 
         assert watermark.image_scale is None
@@ -261,8 +271,13 @@ class TestWatermarkingService:
         service = WatermarkingServiceImpl(mock_pdf_repo, mock_renderer)
 
         # Test various input paths
-        assert service._generate_output_path("document.pdf") == "document_watermarked.pdf"
-        assert service._generate_output_path("/path/to/doc.pdf") == "/path/to/doc_watermarked.pdf"
+        assert (
+            service._generate_output_path("document.pdf") == "document_watermarked.pdf"
+        )
+        assert (
+            service._generate_output_path("/path/to/doc.pdf")
+            == "/path/to/doc_watermarked.pdf"
+        )
 
     def test_apply_watermark_with_image_scale(self):
         """Test that image_scale flows through service correctly."""
@@ -281,10 +296,7 @@ class TestWatermarkingService:
         style = WatermarkStyle()
         scale = ImageScaleConfig(preset=ScalePreset.LARGE)
         watermark = Watermark(
-            type=WatermarkType.IMAGE,
-            content="logo.png",
-            style=style,
-            image_scale=scale
+            type=WatermarkType.IMAGE, content="logo.png", style=style, image_scale=scale
         )
 
         # Act
@@ -308,7 +320,8 @@ class TestReportLabRendererScaling:
     def _create_test_image(self, path, width, height):
         """Helper to create a test image with specific dimensions."""
         from PIL import Image
-        img = Image.new('RGB', (width, height), color='red')
+
+        img = Image.new("RGB", (width, height), color="red")
         img.save(path)
 
     def test_backward_compatibility_none_scale_config(self, tmp_path):
@@ -323,7 +336,7 @@ class TestReportLabRendererScaling:
         x, y, width, height = renderer._calculate_image_dimensions(
             str(image_path),
             (612.0, 792.0),  # Letter size PDF
-            None  # No scale config = backward compatible
+            None,  # No scale config = backward compatible
         )
 
         assert x == -100
@@ -344,7 +357,7 @@ class TestReportLabRendererScaling:
         x, y, width, height = renderer._calculate_image_dimensions(
             str(image_path),
             (612.0, 792.0),  # Letter size PDF
-            scale_config
+            scale_config,
         )
 
         # 1024px image limited to 95% of 612pt = 581.4pt
@@ -364,9 +377,7 @@ class TestReportLabRendererScaling:
         renderer = ReportLabRenderer()
         scale_config = ImageScaleConfig(preset=ScalePreset.ORIGINAL)
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # Should be limited to 95% of PDF width
@@ -384,9 +395,7 @@ class TestReportLabRendererScaling:
         renderer = ReportLabRenderer()
         scale_config = ImageScaleConfig(preset=ScalePreset.MEDIUM)
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # 40% of 612pt = 244.8pt
@@ -405,9 +414,7 @@ class TestReportLabRendererScaling:
         renderer = ReportLabRenderer()
         scale_config = ImageScaleConfig(preset=ScalePreset.MEDIUM)
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # 40% of 612pt = 244.8pt width
@@ -428,9 +435,7 @@ class TestReportLabRendererScaling:
         renderer = ReportLabRenderer()
         scale_config = ImageScaleConfig(preset=ScalePreset.LARGE)
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # 60% of 612pt = 367.2pt width
@@ -451,9 +456,7 @@ class TestReportLabRendererScaling:
         renderer = ReportLabRenderer()
         scale_config = ImageScaleConfig(preset=ScalePreset.LARGE)
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # Height should be limited to 95% of PDF height (752.4pt)
@@ -473,9 +476,7 @@ class TestReportLabRendererScaling:
 
         with pytest.raises(InvalidWatermarkError, match="Image file not found"):
             renderer._calculate_image_dimensions(
-                "/nonexistent/image.png",
-                (612.0, 792.0),
-                scale_config
+                "/nonexistent/image.png", (612.0, 792.0), scale_config
             )
 
     def test_custom_preset_scales_correctly(self, tmp_path):
@@ -487,11 +488,11 @@ class TestReportLabRendererScaling:
         self._create_test_image(image_path, 1024, 1024)
 
         renderer = ReportLabRenderer()
-        scale_config = ImageScaleConfig(preset=ScalePreset.CUSTOM, custom_percentage=75.0)
+        scale_config = ImageScaleConfig(
+            preset=ScalePreset.CUSTOM, custom_percentage=75.0
+        )
         x, y, width, height = renderer._calculate_image_dimensions(
-            str(image_path),
-            (612.0, 792.0),
-            scale_config
+            str(image_path), (612.0, 792.0), scale_config
         )
 
         # 75% of 612pt = 459pt
@@ -555,10 +556,10 @@ def test_full_watermarking_integration(tmp_path):
 
     To enable: create a test PDF and remove the skip decorator.
     """
-    from pdfmarker.infrastructure.adapters import PyPDF2Repository, ReportLabRenderer
+    from pdfmarker.infrastructure.adapters import PDFRepository, ReportLabRenderer
 
     # Create real adapters
-    pdf_repo = PyPDF2Repository()
+    pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
     service = WatermarkingServiceImpl(pdf_repo, renderer)
 
