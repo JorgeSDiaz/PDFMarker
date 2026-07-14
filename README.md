@@ -100,3 +100,9 @@ graph TD
 - Domain: pure business logic (0 deps)
 - Application: ports + services
 - Infrastructure: adapters (pypdf, ReportLab)
+
+## License
+
+PDFMarker is distributed under the [MIT License](LICENSE). It may be used,
+modified, and distributed in open-source or proprietary products, provided
+that the copyright and license notices are preserved.
