@@ -5,13 +5,16 @@ CLI para aplicar marcas de agua a PDFs (texto o imagen).
 ## Install
 
 ```bash
-pip install -r requirements.txt
+pip install pdfmarker-watermark
 ```
+
+El nombre de distribución en PyPI es `pdfmarker-watermark`; el paquete que se
+importa en Python continúa siendo `pdfmarker`.
 
 ## CLI
 
 ```bash
-python main.py
+pdfmarker-watermark
 ```
 
 Ejemplo interactivo:
@@ -66,7 +69,14 @@ Image scale presets: Small (20%), Medium (40%), Large (60%), Original, Custom (5
 
 ## Requirements
 
-Python 3.8+ • pypdf • ReportLab 4.0+
+Python 3.10+ • Pillow 10+ • pypdf 5+ • ReportLab 4.0+
+
+Para desarrollo local:
+
+```bash
+python -m pip install -e ".[dev]"
+pytest tests/ -v
+```
 
 ## Architecture
 

@@ -6,8 +6,10 @@ Tests organized by layer:
 - Infrastructure: Adapter implementations (optional)
 """
 
-import pytest
+from pathlib import Path
 from unittest.mock import Mock
+
+import pytest
 
 from pdfmarker.domain.models import (
     WatermarkType,
@@ -274,10 +276,8 @@ class TestWatermarkingService:
         assert (
             service._generate_output_path("document.pdf") == "document_watermarked.pdf"
         )
-        assert (
-            service._generate_output_path("/path/to/doc.pdf")
-            == "/path/to/doc_watermarked.pdf"
-        )
+        expected = str(Path("/path/to/doc.pdf").with_name("doc_watermarked.pdf"))
+        assert service._generate_output_path("/path/to/doc.pdf") == expected
 
     def test_apply_watermark_with_image_scale(self):
         """Test that image_scale flows through service correctly."""
@@ -561,11 +561,11 @@ def test_full_watermarking_integration(tmp_path):
     # Create real adapters
     pdf_repo = PDFRepository()
     renderer = ReportLabRenderer()
-    service = WatermarkingServiceImpl(pdf_repo, renderer)
+    _service = WatermarkingServiceImpl(pdf_repo, renderer)
 
     # Create watermark
     style = WatermarkStyle()
-    watermark = Watermark(type=WatermarkType.TEXT, content="TEST", style=style)
+    _watermark = Watermark(type=WatermarkType.TEXT, content="TEST", style=style)
 
     # Apply to test PDF (you'd need to create a test.pdf)
     # output = service.apply_watermark_to_pdf("test.pdf", watermark)

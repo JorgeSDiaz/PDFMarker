@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Packaging
+build/
+dist/
+*.egg-info/
+
 # Virtual environments
 .venv
 venv/

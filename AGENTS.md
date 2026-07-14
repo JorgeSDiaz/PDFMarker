@@ -48,7 +48,7 @@ infrastructure → application → domain
 
 ## Code Style
 
-- Python 3.8+, 4 spaces, PEP 8
+- Python 3.10+, 4 spaces, PEP 8
 - Type hints required
 - Dataclasses: `frozen=True` for value objects
 - Interfaces: `typing.Protocol` (not ABC)
