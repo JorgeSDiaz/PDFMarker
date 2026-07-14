@@ -38,9 +38,17 @@ class PDFRepository:
 
             first_page = reader.pages[0]
             width, height = first_page.mediabox.upper_right
+            width, height = float(width), float(height)
+
+            # Account for page rotation: a 90/270 rotated page is displayed
+            # with its dimensions swapped, so the watermark must be rendered
+            # against the visual size, not the raw mediabox.
+            rotation = (first_page.get("/Rotate") or 0) % 360
+            if rotation in (90, 270):
+                width, height = height, width
 
             return PDFDocument(
-                width=float(width), height=float(height), pages=len(reader.pages)
+                width=width, height=height, pages=len(reader.pages)
             )
 
         except Exception as e:
@@ -69,6 +77,11 @@ class PDFRepository:
             watermark_page = watermark_reader.pages[0]
 
             for page in pdf_writer.pages:
+                # Bake any /Rotate into the content stream first so the page
+                # sits at rotation 0 with visual dimensions. Otherwise the
+                # viewer rotates the watermark along with the page, leaving it
+                # upside down / sideways on rotated pages.
+                page.transfer_rotation_to_content()
                 page.merge_page(watermark_page, over=True)
 
             with open(output_path, "wb") as output_file:

@@ -17,12 +17,15 @@ class WatermarkingServiceImpl:
         self._pdf_repo = pdf_repository
         self._renderer = watermark_renderer
 
-    def apply_watermark_to_pdf(self, pdf_path: str, watermark: Watermark) -> str:
+    def apply_watermark_to_pdf(
+        self, pdf_path: str, watermark: Watermark, output_dir: str | None = None
+    ) -> str:
         """Apply watermark to PDF file.
 
         Args:
             pdf_path: Path to the input PDF file
             watermark: Watermark configuration to apply
+            output_dir: Optional directory for the output file; defaults to same dir as input
 
         Returns:
             Path to the watermarked PDF file
@@ -36,7 +39,7 @@ class WatermarkingServiceImpl:
             watermark_path = self._renderer.render(
                 watermark, (pdf_doc.width, pdf_doc.height)
             )
-            output_path = self._generate_output_path(pdf_path)
+            output_path = self._generate_output_path(pdf_path, output_dir)
             self._pdf_repo.merge_watermark(pdf_path, watermark_path, output_path)
             self._cleanup_temp_file(watermark_path)
 
@@ -47,9 +50,10 @@ class WatermarkingServiceImpl:
                 raise
             raise WatermarkApplicationError(f"Failed to apply watermark: {e}") from e
 
-    def _generate_output_path(self, input_path: str) -> str:
+    def _generate_output_path(self, input_path: str, output_dir: str | None = None) -> str:
         path = Path(input_path)
-        return str(path.parent / f"{path.stem}_watermarked{path.suffix}")
+        dest = Path(output_dir) if output_dir else path.parent
+        return str(dest / f"{path.stem}_watermarked{path.suffix}")
 
     def _cleanup_temp_file(self, file_path: str) -> None:
         try:
